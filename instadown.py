@@ -10,6 +10,8 @@ import json
 import re
 import os
 
+import arrow
+
 import urllib.request
 
 from collections import defaultdict
@@ -180,7 +182,8 @@ class Instadown:
 				pass
 
 		try:
-			when_posted = self.driver.find_element_by_xpath('//time[@datetime]').get_attribute('datetime')
+			when_posted = arrow.get(self.driver.find_element_by_xpath('//time[@datetime]')
+				.get_attribute('datetime')).to('Australia/Sydney').format('YYYY-MM-DD')
 		except:
 			pass
 
@@ -201,7 +204,7 @@ class Instadown:
 									.split(',')[-1].strip().split()[0]
 				post_type = 'picture'
 			except:
-				pass
+				print('content URL couldn\'t be retrieved!')
 
 
 		return {'type': post_type, 'posted': when_posted, 'likes': likes, 'comments': comments, 'content_url': content_url}
