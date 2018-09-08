@@ -8,6 +8,9 @@ from selenium.webdriver.common.action_chains import ActionChains
 import time
 import json
 import re
+import os
+
+import urllib.request
 
 from collections import defaultdict
 
@@ -30,6 +33,16 @@ class Instadown:
 		self.login_creds = json.load(open('credentials/instagram.json'))
 
 		self.posts = defaultdict(lambda: defaultdict())
+
+		self.video_dir = 'videos'
+
+		if not os.path.exists(self.video_dir):
+			os.mkdir(self.video_dir)
+
+		self.picture_dir = 'pictures'
+
+		if not os.path.exists(self.picture_dir):
+			os.mkdir(self.picture_dir)
 
 
 	def login(self):
@@ -184,7 +197,8 @@ class Instadown:
 		except:
 			# check if it's a picture
 			try:
-				content_url = self.driver.find_element_by_xpath('//img[@srcset]').get_attribute('srcset').split(',')[-1].strip()
+				content_url = self.driver.find_element_by_xpath('//img[@srcset]').get_attribute('srcset') \
+									.split(',')[-1].strip().split()[0]
 				post_type = 'picture'
 			except:
 				pass
@@ -218,6 +232,22 @@ class Instadown:
 
 		json.dump(self.posts, open('posts.json','w'))
 
+	def get_content(self, id, url):
+
+		"""
+		download whatever the url points to
+		"""
+		ext_ = url.split('.')[-1]
+
+		if ext_ == 'mp4':
+			local_filename, headers = urllib.request.urlretrieve(url, os.path.join(self.video_dir, f'video_{id}.{ext_}'))
+		else:
+			local_filename, headers = urllib.request.urlretrieve(url, os.path.join(self.picture_dir, f'picture_{id}.{ext_}'))
+
+		return self
+
+
+
 
 if __name__ == '__main__':
 
@@ -225,3 +255,8 @@ if __name__ == '__main__':
 
 	ins.login()
 	ins.search('#timtamslam')
+
+	for i, k in enumerate(ins.posts, 1):
+		if i == 10:
+			break
+		ins.get_content(k, ins.posts[k]['content_url'])
